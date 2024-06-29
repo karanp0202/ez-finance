@@ -42,6 +42,7 @@
       text-align: center;
       align-items: center;
     }
+    #datarange,
     input {
       padding: 12px;
       background: transparent;
@@ -61,18 +62,31 @@
       <input type="date" name="datestart" id="datestart">
       To: 
       <input type="date" name="dateend" id="dateend">
+      <select name="datarange" id="datarange">
+        <option value="Custom">Custom</option>
+        <option value="Current Month">Current Month</option>
+        <option value="Current Year">Current Year</option>
+      </select>
     </div>
     <div id="treemap"></div>
   </div>
   <script>
     sheetid.value = localStorage.getItem("sheetid")
-    datestart.value = localStorage.getItem("datestart")
-    dateend.value = localStorage.getItem("dateend")
+    datestart.valueAsNumber = localStorage.getItem("datestart")
+    dateend.valueAsNumber = localStorage.getItem("dateend")
+    datarange.selectedIndex = localStorage.getItem("datarange")
+
+    if (datestart.valueAsNumber == 0)
+      datestart.valueAsNumber = Date.now()
+
+    if (dateend.valueAsNumber == 0)
+      dateend.valueAsNumber = Date.now()
 
     function storeInfo(){
       localStorage.setItem("sheetid", sheetid.value)
-      localStorage.setItem("datestart", datestart.value)
-      localStorage.setItem("dateend", dateend.value)
+      localStorage.setItem("datestart", datestart.valueAsNumber)
+      localStorage.setItem("dateend", dateend.valueAsNumber)
+      localStorage.setItem("datarange", datarange.selectedIndex)
       treemap.innerHTML = ''
       updatedata()
     }
@@ -80,6 +94,7 @@
     sheetid.addEventListener("input", storeInfo)
     datestart.addEventListener("input", storeInfo)
     dateend.addEventListener("input", storeInfo)
+    datarange.addEventListener("input", storeInfo)
 
     function check_local(){
       let raw = localStorage.getItem(sheetid.value)
@@ -95,12 +110,26 @@
     function process_data(raw) {
       data = {}
 
+      switch (datarange.selectedIndex == 1)
+      {
+        case 1:
+        case 2:
+        case 3:
+      }
+
+      let datestart_ = datestart.valueAsNumber / 1000 / 60 / 60 / 24
+      let dateend_ = dateend.valueAsNumber / 1000 / 60 / 60 / 24
+
       for (let i = 1; i < raw.length; i++)
       {
         let cat = raw[i][1]
         let subcat = raw[i][3]
+        let date = Date.parse(raw[i][0]) / 1000 / 60 / 60 / 24
         let amt = Math.round(parseFloat(raw[i][2].substr(1).replace(',','')))
         if (cat == 'Salary' || cat == 'Other++' || cat == 'EMIs' || cat == 'Home' || cat == 'Trade/Invest')
+          continue;
+
+        if (date < datestart_ || date > dateend_)
           continue;
         
         if (!data[cat])
